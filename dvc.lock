@@ -1,0 +1,39 @@
+schema: '2.0'
+stages:
+  training:
+    cmd: python src/training.py --config=params.yaml
+    deps:
+    - path: data/raw/train
+      md5: 518efc60bd3c194a6448768b7bf39717.dir
+      size: 78994571
+      nfiles: 3898
+    - path: src/training.py
+      md5: 4ebd446965ec86f23b7662b81bd70594
+      size: 4565
+    params:
+      params.yaml:
+        mlflow_config.experiment_name: Image Denoising
+        mlflow_config.registered_model_name: AutoEncoder
+        mlflow_config.run_name: 2st
+        mlflow_config.server_uri: sqlite:///mlflow.db
+        training.epoches: 4
+        training.features: 8
+        training.lr: 0.001
+        training.visualize: false
+  log_production_model:
+    cmd: python src/log_production_model.py --config=params.yaml
+    deps:
+    - path: mlflow.db
+      md5: 559a11d0ae96d4e50b056542220cccf2
+      size: 135168
+    - path: src/log_production_model.py
+      md5: db4826563120f8bfa839bf820ed3e01c
+      size: 1071
+    params:
+      params.yaml:
+        mlflow_config.experiment_name: Image Denoising
+        mlflow_config.server_uri: sqlite:///mlflow.db
+    outs:
+    - path: saved_models/model.pth
+      md5: 7ba427d2de9207ca2c40eb71900d6b01
+      size: 66352

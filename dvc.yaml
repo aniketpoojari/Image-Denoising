@@ -1,0 +1,26 @@
+stages:
+  training:
+    cmd: python src/training.py --config=params.yaml
+    deps:
+      - data/raw/train
+      - src/training.py
+    params:
+      - training.features
+      - training.lr
+      - training.visualize
+      - training.epoches
+      - mlflow_config.server_uri
+      - mlflow_config.experiment_name
+      - mlflow_config.run_name
+      - mlflow_config.registered_model_name
+
+  log_production_model:
+    cmd: python src/log_production_model.py --config=params.yaml
+    deps:
+      - src/log_production_model.py
+      - mlflow.db
+    params:
+      - mlflow_config.server_uri
+      - mlflow_config.experiment_name
+    outs:
+      - saved_models/model.pth
