@@ -1,0 +1,5 @@
+outs:
+- md5: 20d9d6106ae028ab1d0cdfb2a6b94fd5.dir
+  size: 688551
+  nfiles: 50
+  path: clean
