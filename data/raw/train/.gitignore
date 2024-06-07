@@ -1,2 +1,4 @@
 clean/*
 noisy/*
+~ clean/.gitkeep
+~ noisy/.gitkeep
