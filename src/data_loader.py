@@ -10,7 +10,9 @@ class ImgDataset(Dataset):
         self.dir = img_dir
 
         self.imgs_name = []
-        for img_name in os.listdir(self.dir + "clean"):
+        for img_name in os.listdir(self.dir + "noisy"):
+            if img_name[0] == ".":
+                continue
             self.imgs_name.append(img_name)
 
     def __getitem__(self, i):

@@ -3,6 +3,7 @@ stages:
     cmd: python src/training.py --config=params.yaml
     deps:
       - data/raw/train
+      - data/raw/test
       - src/training.py
     params:
       - training.features
@@ -13,12 +14,14 @@ stages:
       - mlflow_config.experiment_name
       - mlflow_config.run_name
       - mlflow_config.registered_model_name
+    outs:
+      - training_completion.txt
 
   log_production_model:
     cmd: python src/log_production_model.py --config=params.yaml
     deps:
       - src/log_production_model.py
-      - mlflow.db
+      - training_completion.txt
     params:
       - mlflow_config.server_uri
       - mlflow_config.experiment_name

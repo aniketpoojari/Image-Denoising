@@ -2,10 +2,11 @@ import torch.nn as nn
 import torch
 
 
-class AutoEncoder(nn.Module):
+class VariationalAutoEncoder(nn.Module):
     def __init__(self, features_d):
-        super(AutoEncoder, self).__init__()
-        self.disc = nn.Sequential(
+        super(VariationalAutoEncoder, self).__init__()
+
+        self.encoder = nn.Sequential(
             # input: N x channels_img x 224 x 224
             self._enc_block(
                 in_channels=3,
@@ -28,6 +29,31 @@ class AutoEncoder(nn.Module):
                 stride=2,
                 padding=1,
             ),
+        )
+
+        self.conv_mu = nn.Sequential(
+            nn.Conv2d(
+                features_d * 4, features_d * 4, kernel_size=3, stride=1, padding=1
+            ),
+            nn.BatchNorm2d(features_d * 4),
+            nn.ReLU(),
+            nn.Conv2d(
+                features_d * 4, features_d * 4, kernel_size=3, stride=1, padding=1
+            ),  # Output a single channel for mu
+        )
+
+        self.conv_logvar = nn.Sequential(
+            nn.Conv2d(
+                features_d * 4, features_d * 4, kernel_size=3, stride=1, padding=1
+            ),
+            nn.BatchNorm2d(features_d * 4),
+            nn.ReLU(),
+            nn.Conv2d(
+                features_d * 4, features_d * 4, kernel_size=3, stride=1, padding=1
+            ),  # Output a single channel for logvar
+        )
+
+        self.decoder = nn.Sequential(
             self._dec_block(
                 in_channels=features_d * 4,
                 out_channels=features_d * 2,
@@ -83,9 +109,18 @@ class AutoEncoder(nn.Module):
             nn.ReLU(),
         )
 
+    def reparameterize(self, mu, logvar):
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        return eps * std + mu
+
     def forward(self, imgs):
-        x = self.disc(imgs)
-        return x
+        x = self.encoder(imgs)
+        mu = self.conv_mu(x)
+        logvar = self.conv_logvar(x)
+        z = self.reparameterize(mu, logvar)
+        reconstructed_imgs = self.decoder(z)
+        return reconstructed_imgs
 
 
 def initialize_weights(model):
@@ -96,7 +131,7 @@ def initialize_weights(model):
 
 
 def get_model(features):
-    model = AutoEncoder(features)
+    model = VariationalAutoEncoder(features)
 
     return model
 

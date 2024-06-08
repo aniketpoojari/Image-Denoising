@@ -5,8 +5,8 @@ data:
 training:
   features: 8
   lr: 0.001
-  visualize: False # run 'visdom' in terminal if set true
-  epoches: 4
+  visualize: True # run 'visdom' in terminal if set true
+  epoches: 5
   batch_size: 32
 
 mlflow_config:

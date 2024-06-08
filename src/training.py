@@ -7,6 +7,7 @@ import numpy as np
 import torch
 import torchvision
 import mlflow
+from datetime import datetime
 
 
 def training(config_path):
@@ -112,6 +113,12 @@ def training(config_path):
             f"{mlflow_run.info.run_id}",
             registered_model_name=registered_model_name,
         )
+        with open("training_completion.txt", "w") as file:
+            # Get the current date and time
+            current_datetime = datetime.now()
+            # Format the date and time as a string
+            formatted_datetime = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            file.write("Training Completed at " + formatted_datetime)
 
 
 if __name__ == "__main__":
