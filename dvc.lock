@@ -20,13 +20,13 @@ stages:
         mlflow_config.registered_model_name: AutoEncoder
         mlflow_config.run_name: 2st
         mlflow_config.server_uri: sqlite:///mlflow.db
-        training.epoches: 5
+        training.epoches: 100
         training.features: 8
         training.lr: 0.001
         training.visualize: true
     outs:
     - path: training_completion.txt
-      md5: c6416b5f9bc82eff448cd54fb49dec91
+      md5: 32481b387e2e1942e14e97740cc9ea36
       size: 41
   log_production_model:
     cmd: python src/log_production_model.py --config=params.yaml
@@ -35,7 +35,7 @@ stages:
       md5: db4826563120f8bfa839bf820ed3e01c
       size: 1071
     - path: training_completion.txt
-      md5: c6416b5f9bc82eff448cd54fb49dec91
+      md5: 32481b387e2e1942e14e97740cc9ea36
       size: 41
     params:
       params.yaml:
