@@ -120,7 +120,7 @@ class VariationalAutoEncoder(nn.Module):
         logvar = self.conv_logvar(x)
         z = self.reparameterize(mu, logvar)
         reconstructed_imgs = self.decoder(z)
-        return reconstructed_imgs
+        return reconstructed_imgs, mu, logvar
 
 
 def initialize_weights(model):
@@ -136,9 +136,25 @@ def get_model(features):
     return model
 
 
-def get_essentials(model, lr):
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, betas=(0.0, 0.9))
+class VAE_Loss(nn.Module):
+    def __init__(self, beta=1.0):
+        super(VAE_Loss, self).__init__()
+        self.beta = beta
+        self.mse_loss = nn.MSELoss(reduction="sum")
 
-    criterion = nn.MSELoss()
+    def forward(self, recon_x, x, mu, logvar):
+        recon_loss = self.mse_loss(recon_x, x)
+        kld_loss = -0.5 * torch.sum(
+            1 + logvar - mu.pow(2) - logvar.exp(), dim=(1, 2, 3)
+        )
+        kld_loss = torch.mean(kld_loss)
+        loss = recon_loss + self.beta * kld_loss
+        return loss
+
+
+def get_essentials(model, lr, beta):
+    criterion = VAE_Loss(beta)
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, betas=(0.0, 0.9))
 
     return criterion, optimizer

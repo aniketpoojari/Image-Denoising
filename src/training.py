@@ -19,6 +19,7 @@ def training(config_path):
     visualize = config["training"]["visualize"]
     epoches = config["training"]["epoches"]
     batch_size = config["training"]["batch_size"]
+    beta = config["training"]["beta"]
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     mlflow_config = config["mlflow_config"]
@@ -33,7 +34,7 @@ def training(config_path):
     test_loader = get_data_loader(testing_dir, batch_size)
 
     AutoEncoder = get_model(features).to(device)
-    criterion, optmizer = get_essentials(AutoEncoder, lr)
+    criterion, optmizer = get_essentials(AutoEncoder, lr, beta)
     initialize_weights(AutoEncoder)
 
     if visualize:
@@ -48,10 +49,10 @@ def training(config_path):
             train_l = 0
             AutoEncoder.train()
             for noisy, clean in train_loader:
-                encoding = AutoEncoder(noisy.to(device))
+                encoding, mu, logvar = AutoEncoder(noisy.to(device))
 
                 # Calculate the loss
-                loss = criterion(encoding, clean.to(device))
+                loss = criterion(encoding, clean.to(device), mu, logvar)
                 train_losses.append(loss * noisy.shape[0])
                 train_l += noisy.shape[0]
 
@@ -65,10 +66,10 @@ def training(config_path):
             AutoEncoder.eval()
             with torch.no_grad():
                 for noisy, clean in test_loader:
-                    encoding = AutoEncoder(noisy.to(device))
+                    encoding, mu, logvar = AutoEncoder(noisy.to(device))
 
                     # Calculate the loss
-                    loss = criterion(encoding, clean.to(device))
+                    loss = criterion(encoding, clean.to(device), mu, logvar)
                     test_losses.append(loss * noisy.shape[0])
                     test_l += noisy.shape[0]
 
@@ -77,6 +78,10 @@ def training(config_path):
                 f"Epoch [{epoch}/{epoches}] Train Loss: {sum(train_losses)/train_l} Test Loss: {sum(test_losses)/test_l}"
             )
 
+            # Log metrics for each epoch
+            mlflow.log_metric("Train MSE", sum(train_losses) / train_l, step=epoch)
+            mlflow.log_metric("Test MSE", sum(test_losses) / test_l, step=epoch)
+
             if visualize:
                 input = torch.empty(1, 3, 224, 224)
                 output = torch.empty(1, 3, 224, 224)
@@ -84,9 +89,8 @@ def training(config_path):
                 with torch.no_grad():
                     for noisy, clean in test_loader:
                         input = torch.cat((input, noisy), dim=0)
-                        output = torch.cat(
-                            (output, AutoEncoder(noisy.to(device)).cpu()), dim=0
-                        )
+                        encoding, _, _ = AutoEncoder(noisy.to(device))
+                        output = torch.cat((output, encoding.cpu()), dim=0)
 
                 # Create image grids for visualization
                 n = torchvision.utils.make_grid(input[1:6].cpu(), normalize=True)
@@ -106,8 +110,8 @@ def training(config_path):
                 "batch_size": batch_size,
             }
         )
-        mlflow.log_metric("Train MSE", sum(train_losses) / train_l)
-        mlflow.log_metric("Test MSE", sum(test_losses) / test_l)
+        # mlflow.log_metric("Train MSE", sum(train_losses) / train_l)
+        # mlflow.log_metric("Test MSE", sum(test_losses) / test_l)
         mlflow.pytorch.log_model(
             AutoEncoder,
             f"{mlflow_run.info.run_id}",

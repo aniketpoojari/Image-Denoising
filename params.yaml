@@ -6,8 +6,9 @@ training:
   features: 8
   lr: 0.001
   visualize: True # run 'visdom' in terminal if set true
-  epoches: 100
+  epoches: 1000
   batch_size: 32
+  beta: 1.0
 
 mlflow_config:
   server_uri: sqlite:///mlflow.db

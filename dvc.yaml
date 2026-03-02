@@ -10,6 +10,8 @@ stages:
       - training.lr
       - training.visualize
       - training.epoches
+      - training.batch_size
+      - training.beta
       - mlflow_config.server_uri
       - mlflow_config.experiment_name
       - mlflow_config.run_name
